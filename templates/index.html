@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinpoint - Privacy Protection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 flex items-center justify-center gap-2">
+                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                Pinpoint
+            </h1>
+            <p class="text-gray-600 mt-2">Detect and protect visual privacy risks in your images</p>
+        </div>
+
+        <!-- Error display -->
+        <div id="error" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"></div>
+
+        <!-- Upload Section -->
+        <div id="upload-section">
+            <label for="file-input" class="block border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-gray-400 bg-white transition-colors">
+                <input type="file" id="file-input" accept="image/*" class="hidden">
+                <div class="flex flex-col items-center gap-4">
+                    <div class="p-4 bg-gray-100 rounded-full">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-lg font-medium text-gray-700">Upload an image to analyze</p>
+                        <p class="text-sm text-gray-500 mt-1">Click to browse or drag and drop</p>
+                    </div>
+                    <p class="text-xs text-gray-400">Supports JPG, PNG, GIF, WebP</p>
+                </div>
+            </label>
+        </div>
+
+        <!-- Loading Section -->
+        <div id="loading-section" class="hidden text-center py-12">
+            <div class="loader mx-auto mb-4"></div>
+            <p class="text-lg text-gray-600" id="loading-text">Analyzing image for privacy risks...</p>
+            <p class="text-sm text-gray-400">This may take a moment</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="hidden">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Image -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Analysis Results</h2>
+                    <img id="result-image" class="w-full rounded-lg shadow-md" alt="Analyzed image">
+                    <div id="risk-score" class="mt-4 p-4 rounded-xl flex items-center gap-3"></div>
+                </div>
+
+                <!-- Findings -->
+                <div>
+                    <div id="findings-container"></div>
+
+                    <div id="action-buttons" class="mt-6 space-y-3">
+                        <button id="protect-btn" class="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            <span id="protect-btn-text">Erase Selected Risks</span>
+                        </button>
+                        <button id="reset-btn" class="w-full flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Analyze Another Picture
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Protected Section -->
+        <div id="protected-section" class="hidden">
+            <!-- Score comparison -->
+            <div class="flex items-center justify-center gap-4 mb-8">
+                <div id="before-score" class="p-4 rounded-xl flex items-center gap-3"></div>
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+                <div id="after-score" class="p-4 rounded-xl flex items-center gap-3"></div>
+            </div>
+
+            <!-- Images comparison -->
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">Original</h3>
+                    <img id="original-image" class="w-full rounded-lg shadow-md" alt="Original">
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">Protected</h3>
+                    <img id="protected-image" class="w-full rounded-lg shadow-md" alt="Protected">
+                </div>
+            </div>
+
+            <!-- Residual risks -->
+            <div id="residual-risks" class="hidden max-w-xl mx-auto p-4 bg-amber-50 border border-amber-200 rounded-lg mb-8">
+                <h3 class="font-medium text-amber-800 mb-2">Residual Risks Detected</h3>
+                <p class="text-sm text-amber-700">Some privacy risks may still be visible:</p>
+                <ul id="residual-list" class="mt-2 space-y-1"></ul>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-wrap justify-center gap-4">
+                <button id="download-btn" class="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download Protected Image
+                </button>
+                <button id="cloak-btn" class="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                    </svg>
+                    Cloak Image (Anti-AI)
+                </button>
+                <button id="new-image-btn" class="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Analyze Another Image
+                </button>
+            </div>
+        </div>
+
+        <!-- Cloaked Section -->
+        <div id="cloaked-section" class="hidden">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Image Cloaked</h2>
+                <p class="text-gray-600 mt-2">Subtle perturbations added to disrupt facial recognition AI</p>
+            </div>
+
+            <!-- Cloaked image -->
+            <div class="max-w-2xl mx-auto mb-8">
+                <img id="cloaked-image" class="w-full rounded-lg shadow-md" alt="Cloaked image">
+                <p id="cloak-message" class="text-center text-sm text-gray-500 mt-2"></p>
+            </div>
+
+            <!-- Info box -->
+            <div class="max-w-xl mx-auto p-4 bg-purple-50 border border-purple-200 rounded-lg mb-8">
+                <h3 class="font-medium text-purple-800 mb-2">What is Cloaking?</h3>
+                <p class="text-sm text-purple-700">
+                    Cloaking adds invisible noise patterns to your image that confuse facial recognition systems
+                    while keeping the image looking normal to humans. This can help protect your privacy from AI scrapers.
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-center gap-4">
+                <button id="download-cloaked-btn" class="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download Cloaked Image
+                </button>
+                <button id="back-to-protected-btn" class="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Back
+                </button>
+                <button id="new-image-btn-2" class="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Analyze Another Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let originalImageData = null;
+        let analysisResult = null;
+        let selectedIds = new Set();
+
+        // Elements
+        const uploadSection = document.getElementById('upload-section');
+        const loadingSection = document.getElementById('loading-section');
+        const resultsSection = document.getElementById('results-section');
+        const protectedSection = document.getElementById('protected-section');
+        const cloakedSection = document.getElementById('cloaked-section');
+        const errorDiv = document.getElementById('error');
+        const fileInput = document.getElementById('file-input');
+        const loadingText = document.getElementById('loading-text');
+
+        // Store cloaked image data
+        let cloakedImageData = null;
+
+        // Show error
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        // Hide error
+        function hideError() {
+            errorDiv.classList.add('hidden');
+        }
+
+        // Show section
+        function showSection(section) {
+            uploadSection.classList.add('hidden');
+            loadingSection.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            protectedSection.classList.add('hidden');
+            cloakedSection.classList.add('hidden');
+            section.classList.remove('hidden');
+        }
+
+        // Create risk score element
+        function createRiskScore(score, label = null) {
+            let level, color, bgColor, borderColor;
+            if (score < 25) {
+                level = 'Low Risk';
+                color = 'text-green-600';
+                bgColor = 'bg-green-100';
+                borderColor = 'border-green-200';
+            } else if (score < 60) {
+                level = 'Medium Risk';
+                color = 'text-amber-600';
+                bgColor = 'bg-amber-100';
+                borderColor = 'border-amber-200';
+            } else {
+                level = 'High Risk';
+                color = 'text-red-600';
+                bgColor = 'bg-red-100';
+                borderColor = 'border-red-200';
+            }
+
+            return `
+                <div class="${bgColor} ${borderColor} border rounded-xl p-4 flex items-center gap-3">
+                    <div class="text-2xl font-bold ${color}">${score}</div>
+                    <div class="text-sm font-medium ${color}">${label || level}</div>
+                </div>
+            `;
+        }
+
+        // Render findings
+        function renderFindings(findings) {
+            const container = document.getElementById('findings-container');
+
+            if (findings.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+                        <svg class="w-12 h-12 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <h3 class="text-lg font-medium text-green-800">No Privacy Risks Detected</h3>
+                        <p class="text-sm text-green-600 mt-1">This image appears safe to share</p>
+                    </div>
+                    <div class="mt-6">
+                        <button onclick="document.getElementById('file-input').value=''; showSection(uploadSection);" class="w-full flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Analyze Another Picture
+                        </button>
+                    </div>
+                `;
+                document.getElementById('action-buttons').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('action-buttons').classList.remove('hidden');
+
+            const categoryLabels = {
+                'id_card': 'ID Card/Badge',
+                'license_plate': 'License Plate',
+                'house_number': 'House Number',
+                'street_sign': 'Street Sign',
+                'document': 'Document',
+                'business_sign': 'Business Sign',
+                'other': 'Other'
+            };
+
+            const severityColors = {
+                'high': { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-600' },
+                'medium': { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' },
+                'low': { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600' }
+            };
+
+            let html = `
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold text-gray-800">Found ${findings.length} potential risk${findings.length !== 1 ? 's' : ''}</h3>
+                    <div class="flex gap-2 text-sm">
+                        <button onclick="selectAll()" class="text-blue-600 hover:text-blue-800">Select All</button>
+                        <span class="text-gray-300">|</span>
+                        <button onclick="selectNone()" class="text-blue-600 hover:text-blue-800">Select None</button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+            `;
+
+            findings.forEach(finding => {
+                const colors = severityColors[finding.severity] || severityColors.medium;
+                const checked = selectedIds.has(finding.id) ? 'checked' : '';
+                const ringClass = selectedIds.has(finding.id) ? 'ring-2 ring-blue-500 ring-offset-1' : '';
+
+                html += `
+                    <div onclick="toggleFinding(${finding.id})" class="${colors.bg} ${colors.border} border rounded-lg p-3 cursor-pointer ${ringClass}">
+                        <div class="flex items-start gap-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${colors.text} ${colors.bg} border ${colors.border}">
+                                    ${finding.id}
+                                </div>
+                                <input type="checkbox" ${checked} onclick="event.stopPropagation(); toggleFinding(${finding.id})" class="w-4 h-4 rounded border-gray-300 text-blue-600">
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-medium uppercase ${colors.text}">
+                                        ${categoryLabels[finding.category] || finding.category}
+                                    </span>
+                                    <span class="text-xs ${colors.text} opacity-75">(${finding.severity})</span>
+                                </div>
+                                <p class="text-sm text-gray-700 mt-1">${finding.description}</p>
+                                <p class="text-xs text-gray-500 mt-1">Location: ${finding.region_hint}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+            updateProtectButton();
+        }
+
+        // Toggle finding selection
+        function toggleFinding(id) {
+            if (selectedIds.has(id)) {
+                selectedIds.delete(id);
+            } else {
+                selectedIds.add(id);
+            }
+            renderFindings(analysisResult.findings);
+        }
+
+        // Select all
+        function selectAll() {
+            analysisResult.findings.forEach(f => selectedIds.add(f.id));
+            renderFindings(analysisResult.findings);
+        }
+
+        // Select none
+        function selectNone() {
+            selectedIds.clear();
+            renderFindings(analysisResult.findings);
+        }
+
+        // Update protect button
+        function updateProtectButton() {
+            const btn = document.getElementById('protect-btn');
+            const text = document.getElementById('protect-btn-text');
+            if (selectedIds.size > 0) {
+                btn.disabled = false;
+                btn.classList.remove('bg-gray-200', 'text-gray-400', 'cursor-not-allowed');
+                btn.classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');
+                text.textContent = `Erase ${selectedIds.size} Selected Risk${selectedIds.size !== 1 ? 's' : ''}`;
+            } else {
+                btn.disabled = true;
+                btn.classList.add('bg-gray-200', 'text-gray-400', 'cursor-not-allowed');
+                btn.classList.remove('bg-red-600', 'text-white', 'hover:bg-red-700');
+                text.textContent = 'Select risks to erase';
+            }
+        }
+
+        // File input handler
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showError('Please upload an image file');
+                return;
+            }
+
+            hideError();
+            showSection(loadingSection);
+            loadingText.textContent = 'Analyzing image for privacy risks...';
+
+            // Read file as base64
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const dataUrl = e.target.result;
+                originalImageData = dataUrl.split(',')[1];
+
+                try {
+                    const response = await fetch('/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: originalImageData })
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.error || 'Analysis failed');
+                    }
+
+                    analysisResult = await response.json();
+                    selectedIds = new Set(analysisResult.findings.map(f => f.id));
+
+                    // Show results
+                    document.getElementById('result-image').src = 'data:image/jpeg;base64,' + analysisResult.annotated_image;
+                    document.getElementById('risk-score').innerHTML = createRiskScore(analysisResult.risk_score);
+                    renderFindings(analysisResult.findings);
+                    showSection(resultsSection);
+
+                } catch (err) {
+                    showError(err.message);
+                    showSection(uploadSection);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Protect button handler
+        document.getElementById('protect-btn').addEventListener('click', async () => {
+            if (selectedIds.size === 0) return;
+
+            hideError();
+            showSection(loadingSection);
+            loadingText.textContent = 'Applying protection...';
+
+            try {
+                const response = await fetch('/protect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: originalImageData,
+                        findings: analysisResult.findings,
+                        fix_ids: Array.from(selectedIds),
+                        verify: true
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Protection failed');
+                }
+
+                const result = await response.json();
+
+                // Show protected section
+                document.getElementById('before-score').innerHTML = createRiskScore(result.before_score, 'Before');
+                document.getElementById('after-score').innerHTML = createRiskScore(result.after_score, 'After');
+                document.getElementById('original-image').src = 'data:image/jpeg;base64,' + originalImageData;
+                document.getElementById('protected-image').src = 'data:image/jpeg;base64,' + result.protected_image;
+
+                // Residual risks
+                const residualDiv = document.getElementById('residual-risks');
+                if (result.residual_risks && result.residual_risks.length > 0) {
+                    const list = document.getElementById('residual-list');
+                    list.innerHTML = result.residual_risks.map(r =>
+                        `<li class="text-sm text-amber-600">- ${r.description}</li>`
+                    ).join('');
+                    residualDiv.classList.remove('hidden');
+                } else {
+                    residualDiv.classList.add('hidden');
+                }
+
+                // Store for download
+                window.protectedImageData = result.protected_image;
+                showSection(protectedSection);
+
+            } catch (err) {
+                showError(err.message);
+                showSection(resultsSection);
+            }
+        });
+
+        // Download button
+        document.getElementById('download-btn').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.href = 'data:image/jpeg;base64,' + window.protectedImageData;
+            link.download = 'protected_image.jpg';
+            link.click();
+        });
+
+        // Reset buttons
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            fileInput.value = '';
+            showSection(uploadSection);
+        });
+
+        document.getElementById('new-image-btn').addEventListener('click', () => {
+            fileInput.value = '';
+            showSection(uploadSection);
+        });
+
+        // Cloak button handler
+        document.getElementById('cloak-btn').addEventListener('click', async () => {
+            hideError();
+            showSection(loadingSection);
+            loadingText.textContent = 'Applying cloak protection...';
+
+            try {
+                // Use the protected image if available, otherwise original
+                const imageToCloak = window.protectedImageData || originalImageData;
+
+                const response = await fetch('/cloak', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageToCloak, intensity: 0.04 })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Cloaking failed');
+                }
+
+                const result = await response.json();
+                cloakedImageData = result.cloaked_image;
+
+                document.getElementById('cloaked-image').src = 'data:image/jpeg;base64,' + result.cloaked_image;
+                document.getElementById('cloak-message').textContent = result.message;
+                showSection(cloakedSection);
+
+            } catch (err) {
+                showError(err.message);
+                showSection(protectedSection);
+            }
+        });
+
+        // Download cloaked image
+        document.getElementById('download-cloaked-btn').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.href = 'data:image/jpeg;base64,' + cloakedImageData;
+            link.download = 'cloaked_image.jpg';
+            link.click();
+        });
+
+        // Back to protected section
+        document.getElementById('back-to-protected-btn').addEventListener('click', () => {
+            showSection(protectedSection);
+        });
+
+        // New image from cloaked section
+        document.getElementById('new-image-btn-2').addEventListener('click', () => {
+            fileInput.value = '';
+            showSection(uploadSection);
+        });
+    </script>
+</body>
+</html>
